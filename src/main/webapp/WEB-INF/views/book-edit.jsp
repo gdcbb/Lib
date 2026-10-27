@@ -66,11 +66,6 @@
                value="<c:out value='${book.category}'/>" required>
       </div>
       <div class="field">
-        <label for="price">价格</label>
-        <input type="number" id="price" name="price" step="0.01" min="0"
-               value="${book.price}" required>
-      </div>
-      <div class="field">
         <label for="stock">库存</label>
         <input type="number" id="stock" name="stock" min="0"
                value="${book.stock}" required>

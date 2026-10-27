@@ -7,9 +7,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-import org.example.library.util.PasswordUtil;
-import org.example.library.util.dao.UserDAO;
 import org.example.library.util.model.User;
+import org.example.library.util.service.UserService;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -17,7 +16,7 @@ import java.sql.SQLException;
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
 
-    private final UserDAO userDAO = new UserDAO();
+    private final UserService userService = new UserService();
 
     @Override
     protected void doGet(HttpServletRequest request,
@@ -55,10 +54,9 @@ public class LoginServlet extends HttpServlet {
         }
 
         try {
-            User user = userDAO.findByUsername(username.trim());
+            User user = userService.login(username, password);
 
-            if (user == null
-                    || !PasswordUtil.verify(password, user.getPassword())) {
+            if (user == null) {
                 forwardWithError(request, response, "用户名或密码错误");
                 return;
             }
@@ -71,8 +69,7 @@ public class LoginServlet extends HttpServlet {
 
             HttpSession session = request.getSession(true);
 
-            // 仅保存必要的身份信息，密码不进入 Session
-            user.setPassword(null);
+            // UserService 已清空密码，仅保存必要的身份信息
             session.setAttribute("loginUser", user);
             session.setAttribute("loginTime", System.currentTimeMillis());
 

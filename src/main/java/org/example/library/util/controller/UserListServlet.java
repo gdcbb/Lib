@@ -7,8 +7,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-import org.example.library.util.dao.UserDAO;
 import org.example.library.util.model.User;
+import org.example.library.util.service.UserService;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -17,7 +17,7 @@ import java.util.List;
 @WebServlet("/admin/users")
 public class UserListServlet extends HttpServlet {
 
-    private final UserDAO userDAO = new UserDAO();
+    private final UserService userService = new UserService();
 
     @Override
     protected void doGet(HttpServletRequest request,
@@ -42,7 +42,7 @@ public class UserListServlet extends HttpServlet {
         }
 
         try {
-            List<User> users = userDAO.findAll();
+            List<User> users = userService.listAll();
             request.setAttribute("users", users);
 
             request.getRequestDispatcher("/WEB-INF/views/users.jsp")
