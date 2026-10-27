@@ -1,4 +1,3 @@
-
 package org.example.library.util.controller;
 
 import jakarta.servlet.ServletException;
@@ -8,18 +7,18 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-import org.example.library.util.dao.BookDAO;
 import org.example.library.util.model.Book;
 import org.example.library.util.model.User;
+import org.example.library.util.service.BookService;
+import org.example.library.util.service.ServiceException;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.sql.SQLException;
 
 @WebServlet("/books/edit")
 public class BookEditServlet extends HttpServlet {
 
-    private final BookDAO bookDAO = new BookDAO();
+    private final BookService bookService = new BookService();
 
     // 显示图书修改页面
     @Override
@@ -37,10 +36,8 @@ public class BookEditServlet extends HttpServlet {
 
         request.setCharacterEncoding("UTF-8");
 
-        String idText = request.getParameter("id");
-
         try {
-            long id = Long.parseLong(idText);
+            long id = Long.parseLong(request.getParameter("id"));
 
             if (id <= 0) {
                 response.sendError(
@@ -50,7 +47,7 @@ public class BookEditServlet extends HttpServlet {
                 return;
             }
 
-            Book book = bookDAO.findById(id);
+            Book book = bookService.findById(id);
 
             if (book == null) {
                 response.sendError(
@@ -94,57 +91,20 @@ public class BookEditServlet extends HttpServlet {
         try {
             long id = Long.parseLong(request.getParameter("id"));
 
-            String isbn = request.getParameter("isbn");
-            String title = request.getParameter("title");
-            String author = request.getParameter("author");
-            String publisher = request.getParameter("publisher");
-            String category = request.getParameter("category");
-            String priceText = request.getParameter("price");
-            String stockText = request.getParameter("stock");
+            String error = bookService.update(
+                    id,
+                    request.getParameter("isbn"),
+                    request.getParameter("title"),
+                    request.getParameter("author"),
+                    request.getParameter("publisher"),
+                    request.getParameter("category"),
+                    request.getParameter("stock")
+            );
 
-            if (id <= 0
-                    || isBlank(isbn)
-                    || isBlank(title)
-                    || isBlank(author)
-                    || isBlank(publisher)
-                    || isBlank(category)
-                    || isBlank(priceText)
-                    || isBlank(stockText)) {
-
+            if (error != null) {
                 response.sendError(
                         HttpServletResponse.SC_BAD_REQUEST,
-                        "ID 和所有图书字段均不能为空"
-                );
-                return;
-            }
-
-            BigDecimal price = new BigDecimal(priceText);
-            int stock = Integer.parseInt(stockText);
-
-            if (price.compareTo(BigDecimal.ZERO) < 0 || stock < 0) {
-                response.sendError(
-                        HttpServletResponse.SC_BAD_REQUEST,
-                        "价格和库存不能小于 0"
-                );
-                return;
-            }
-
-            Book book = new Book();
-            book.setId(id);
-            book.setIsbn(isbn.trim());
-            book.setTitle(title.trim());
-            book.setAuthor(author.trim());
-            book.setPublisher(publisher.trim());
-            book.setCategory(category.trim());
-            book.setPrice(price);
-            book.setStock(stock);
-
-            boolean updated = bookDAO.update(book);
-
-            if (!updated) {
-                response.sendError(
-                        HttpServletResponse.SC_NOT_FOUND,
-                        "图书不存在或没有发生修改"
+                        error
                 );
                 return;
             }
@@ -156,22 +116,13 @@ public class BookEditServlet extends HttpServlet {
         } catch (NumberFormatException e) {
             response.sendError(
                     HttpServletResponse.SC_BAD_REQUEST,
-                    "ID、价格或库存格式不正确"
+                    "ID 或库存格式不正确"
             );
+        } catch (ServiceException e) {
+            response.sendError(e.getStatus(), e.getMessage());
         } catch (SQLException e) {
-            if (e.getErrorCode() == 1062) {
-                response.sendError(
-                        HttpServletResponse.SC_CONFLICT,
-                        "修改失败：ISBN 已被其他图书使用"
-                );
-            } else {
-                throw new ServletException("修改图书失败", e);
-            }
+            throw new ServletException("修改图书失败", e);
         }
-    }
-
-    private boolean isBlank(String value) {
-        return value == null || value.trim().isEmpty();
     }
 
     private boolean isAdmin(HttpServletRequest request) {

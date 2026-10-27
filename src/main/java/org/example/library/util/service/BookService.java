@@ -8,7 +8,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 /**
- * 图书业务层：负责参数校验、业务规则与 DAO 调用。
+ * 图书业务层：负责参数校验、业务规则与 DAO 调用。git remote -v
  */
 public class BookService {
 

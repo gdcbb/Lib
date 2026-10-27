@@ -7,8 +7,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-import org.example.library.util.dao.BookDAO;
 import org.example.library.util.model.User;
+import org.example.library.util.service.BookService;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -16,7 +16,7 @@ import java.sql.SQLException;
 @WebServlet("/books/delete")
 public class BookDeleteServlet extends HttpServlet {
 
-    private final BookDAO bookDAO = new BookDAO();
+    private final BookService bookService = new BookService();
 
     @Override
     protected void doPost(HttpServletRequest request,
@@ -31,10 +31,8 @@ public class BookDeleteServlet extends HttpServlet {
             return;
         }
 
-        String idText = request.getParameter("id");
-
         try {
-            long id = Long.parseLong(idText);
+            long id = Long.parseLong(request.getParameter("id"));
 
             if (id <= 0) {
                 response.sendError(
@@ -44,7 +42,7 @@ public class BookDeleteServlet extends HttpServlet {
                 return;
             }
 
-            if (!bookDAO.delete(id)) {
+            if (!bookService.delete(id)) {
                 response.sendError(
                         HttpServletResponse.SC_NOT_FOUND,
                         "图书不存在或已被删除"

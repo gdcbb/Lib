@@ -6,8 +6,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.example.library.util.dao.BookDAO;
 import org.example.library.util.model.Book;
+import org.example.library.util.service.BookService;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -16,7 +16,7 @@ import java.util.List;
 @WebServlet("/books")
 public class BookListServlet extends HttpServlet {
 
-    private final BookDAO bookDAO = new BookDAO();
+    private final BookService bookService = new BookService();
 
     @Override
     protected void doGet(HttpServletRequest request,
@@ -28,7 +28,7 @@ public class BookListServlet extends HttpServlet {
         String keyword = request.getParameter("keyword");
 
         try {
-            List<Book> books = bookDAO.findAll(keyword);
+            List<Book> books = bookService.search(keyword);
             request.setAttribute("books", books);
             request.setAttribute("keyword", keyword);
 
