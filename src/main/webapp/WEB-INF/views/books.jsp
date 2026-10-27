@@ -1,6 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -35,6 +34,24 @@
     .link-danger { color: #dc2626; background: none; border: 0; cursor: pointer;
             font-size: 14px; padding: 0; }
     .empty { padding: 40px; text-align: center; color: #999; background: #fff; }
+    .btn-borrow { padding: 5px 12px; border: 0; border-radius: 4px;
+            background: #16a34a; color: #fff; font-size: 13px; cursor: pointer; }
+    .btn-borrow:hover { background: #15803d; }
+    .btn-borrow:disabled { background: #d1d5db; color: #9ca3af; cursor: not-allowed; }
+    .mask { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45);
+            align-items: center; justify-content: center; z-index: 10; }
+    .mask.show { display: flex; }
+    .dialog { width: 320px; background: #fff; border-radius: 8px; padding: 20px 22px;
+            box-shadow: 0 10px 30px rgba(0,0,0,.2); }
+    .dialog h3 { margin: 0 0 12px; font-size: 16px; }
+    .dialog .book-name { margin: 0 0 16px; font-size: 14px; color: #555; }
+    .dialog label { font-size: 14px; }
+    .dialog select { padding: 6px 8px; border: 1px solid #d0d5dd; border-radius: 4px;
+            font-size: 14px; margin: 0 6px; }
+    .dialog-actions { margin-top: 20px; text-align: right; }
+    .dialog-actions button { padding: 7px 16px; font-size: 14px; border-radius: 4px;
+            border: 1px solid #d0d5dd; background: #fff; cursor: pointer; margin-left: 8px; }
+    .dialog-actions .confirm { background: #2563eb; border-color: #2563eb; color: #fff; }
   </style>
 </head>
 <body>
@@ -46,11 +63,13 @@
       <c:when test="${sessionScope.loginUser.role == 'admin'}">
         <span class="role-badge role-admin">管理员</span>
         <a href="${pageContext.request.contextPath}/admin/users">用户管理</a>
+        <a href="${pageContext.request.contextPath}/admin/borrows">借阅记录</a>
       </c:when>
       <c:otherwise>
         <span class="role-badge role-user">普通用户</span>
       </c:otherwise>
     </c:choose>
+    <a href="${pageContext.request.contextPath}/borrows">我的借阅</a>
     <a href="${pageContext.request.contextPath}/logout">退出登录</a>
   </div>
 </div>
@@ -81,7 +100,7 @@
           <th>作者</th>
           <th>出版社</th>
           <th>分类</th>
-          <th>价格</th>
+          <th>借阅</th>
           <th>库存</th>
           <c:if test="${sessionScope.loginUser.role == 'admin'}">
             <th>操作</th>
@@ -97,7 +116,19 @@
             <td><c:out value="${book.author}"/></td>
             <td><c:out value="${book.publisher}"/></td>
             <td><c:out value="${book.category}"/></td>
-            <td><fmt:formatNumber value="${book.price}" pattern="0.00"/></td>
+            <td>
+              <c:choose>
+                <c:when test="${book.stock > 0}">
+                  <button class="btn-borrow" type="button"
+                          data-id="${book.id}"
+                          data-title="<c:out value='${book.title}'/>"
+                          onclick="openBorrow(this)">借阅</button>
+                </c:when>
+                <c:otherwise>
+                  <button class="btn-borrow" type="button" disabled>借阅</button>
+                </c:otherwise>
+              </c:choose>
+            </td>
             <td>${book.stock}</td>
             <c:if test="${sessionScope.loginUser.role == 'admin'}">
               <td>
@@ -118,5 +149,56 @@
     </c:otherwise>
   </c:choose>
 </div>
+
+<div class="mask" id="borrowMask">
+  <div class="dialog">
+    <h3>借阅图书</h3>
+    <p class="book-name" id="borrowBookName"></p>
+    <label>借阅时间：
+      <select id="borrowDays">
+        <option value="1">1 天</option>
+        <option value="2">2 天</option>
+        <option value="3">3 天</option>
+        <option value="4">4 天</option>
+        <option value="5">5 天</option>
+        <option value="6">6 天</option>
+        <option value="7">7 天</option>
+      </select>
+    </label>
+    <div class="dialog-actions">
+      <button type="button" onclick="closeBorrow()">取消</button>
+      <button type="button" class="confirm" onclick="confirmBorrow()">确定</button>
+    </div>
+  </div>
+</div>
+
+<form id="borrowForm" method="post"
+      action="${pageContext.request.contextPath}/books/borrow">
+  <input type="hidden" name="id" id="borrowId">
+  <input type="hidden" name="days" id="borrowDaysInput">
+</form>
+
+<script>
+  function openBorrow(button) {
+    document.getElementById('borrowId').value = button.dataset.id;
+    document.getElementById('borrowBookName').textContent = button.dataset.title;
+    document.getElementById('borrowDays').value = '1';
+    document.getElementById('borrowMask').classList.add('show');
+  }
+
+  function closeBorrow() {
+    document.getElementById('borrowMask').classList.remove('show');
+  }
+
+  function confirmBorrow() {
+    document.getElementById('borrowDaysInput').value =
+        document.getElementById('borrowDays').value;
+    document.getElementById('borrowForm').submit();
+  }
+</script>
+
+<c:if test="${param.borrowed == '1'}">
+  <script>alert('借阅成功');</script>
+</c:if>
 </body>
 </html>

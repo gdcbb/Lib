@@ -31,6 +31,19 @@ CREATE TABLE IF NOT EXISTS book (
     UNIQUE KEY uk_book_isbn (isbn)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
+CREATE TABLE IF NOT EXISTS borrow_record (
+    id          BIGINT      NOT NULL AUTO_INCREMENT,
+    user_id     BIGINT      NOT NULL,
+    book_id     BIGINT      NOT NULL,
+    borrow_time DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    due_date    DATE        NOT NULL,
+    return_time DATETIME    DEFAULT NULL,
+    status      TINYINT     NOT NULL DEFAULT 0 COMMENT '0 未归还，1 已归还',
+    PRIMARY KEY (id),
+    KEY idx_borrow_user (user_id),
+    KEY idx_borrow_book (book_id)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
 -- 默认账号：admin / admin123
 INSERT INTO `user` (username, password, real_name, role)
 SELECT 'admin', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', '管理员', 'admin'
